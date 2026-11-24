@@ -1,6 +1,6 @@
 # The always-on agent, as Loopster tables
 
-My version runs on my laptop every 15 minutes (slide 43 in the talk). This is the same agent rebuilt in Loopster, so it runs without a laptop. **It's a spec. It hasn't been built end to end yet.** Build it with autoplay off and test each table on one row.
+My version runs on my laptop every 15 minutes (slide 43 in the talk). This is the same agent rebuilt in Loopster, so it runs without a laptop. **Built and tested on 24 Nov 2026, apart from the Slack and link-view columns.** A reply sent to the webhook landed as a row, marked the person as replied in the Outreach log and stopped their 36 hour timer, all for $0. Build it with autoplay off and test each table on one row.
 
 What it does, same as the laptop version:
 
@@ -64,6 +64,14 @@ Never open with Just, Hope, Following up, Circling back or Bumping. Return only 
 
 6. **Rules check** (`ai-loopster-default-mini`, JSON). Run when Draft follow-up isn't empty. Prompt: check the draft against your writing rules and return `{"pass": true or false, "problems": "the words that broke a rule, or empty"}`. Paste your rules into the prompt. Mine: no em dashes, no semicolons, no "this, not that" contrasts, no delve, leverage, robust, seamless, unlock, game-changer.
 7. **Send draft to me** (`slack-send-message`). Run when Rules check `pass == true`. Text: `Follow-up for @{name} (@{email}), no reply in 36h:` then the draft. Drafts that fail the check stay in the table for you to fix.
+
+**What the test build found:**
+
+- **Slack columns never run on autoplay.** Loopster marks any column that sends data outside Loopster as manual-trigger-only. So Call now, Send draft to me and Alert me need an hourly schedule (`cells: "empty"`) or a trigger that names them. An hourly schedule on them means alerts arrive within the hour.
+- **Formulas work as written.** `Date.now()` and `new Date(...)` are fine in a formula. Mentions go in as `@{col_id}`. Return text like "yes" and gate on `@{col} == "yes"`.
+- **Formulas recompute when a row changes, not as the clock moves.** A row that crosses 36 hours with nothing else changing stays "no". Put Follow-up due? on the hourly schedule with `cells: "all"`.
+- **The webhook address only shows once.** `GET /tables/{t}/webhook` returns the last four characters. `POST /tables/{t}/webhook/rotate` returns the full address. Rotate before you give it to HeyReach.
+- **Mark replied** is `send-to-table` with method `send-row`, `updateExistingRows: true`, the unique key set to Outreach log's `linkedin_url`, and `additionalData: [{"fieldName": "replied", "value": "true"}]`. That's free, and it's the line that stops the timer.
 
 **Schedule:** one `interval` schedule on Link views, every 1 hour, `cells: "all"`, so the count refreshes. The formula columns recompute by themselves. Draft follow-up, Rules check and the two Slack columns run on autoplay once their condition becomes true, so turn **autoplay on for this table only after the one-row test**.
 
