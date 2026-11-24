@@ -1,4 +1,4 @@
-# Zero to one outbound: HeyReach + Loopster
+# HeyReach + Loopster
 
 The build files from my talk at the HeyReach, Loopster, Smartlead and ZapMail event in Lisbon on 24 Nov 2026.
 
