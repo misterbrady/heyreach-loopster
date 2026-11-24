@@ -1,0 +1,73 @@
+{
+  "table": "search-queries",
+  "note": "Column settings exported from a working Loopster build on 24 Nov 2026. Column ids are from that workspace. A new build gets new ids, so rebuild references with your own ids (see the API shapes section of lane-scout-loopster.md).",
+  "columns": [
+    {
+      "id": "input",
+      "header": "Source name",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_962d6d656d3e",
+      "header": "Search query",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_25a572f28576",
+      "header": "ATS or source",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_ef6445ca7ee5",
+      "header": "Notes",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_8c1350c543f6",
+      "header": "Discover jobs",
+      "type": "ai",
+      "dataShape": "json",
+      "aiConfig": {
+        "model": "loopster-default",
+        "tools": [
+          "serpSearch",
+          "retrieveUrl"
+        ],
+        "prompt": "You are Lane Scout, an automated job-post discovery agent finding companies currently hiring GTM Engineers.\n\nRun this exact search:\nSource: @{input}\nQuery: @{col_962d6d656d3e}\nATS / source type: @{col_25a572f28576}\nExtra guidance: @{col_ef6445ca7ee5}\n\nRules:\n1. Find live, currently open job postings matching this query (prioritize roles posted or updated recently).\n2. Keep a posting ONLY if the title is GTM Engineer, GTM Engineering, Go-to-Market Engineer, or Growth Engineer with outbound or enrichment in the duties. Drop RevOps analyst, SDR, sales engineer, and solutions engineer roles.\n3. Prefer the individual job page URL when search results include one. A company ATS listing URL is acceptable as a starting point; Table 2 will resolve it to the specific job. Leave fields as empty strings \"\" when unknown. Never guess.\n4. Open each candidate posting URL when needed to extract the company domain, location, remote status, salary band, hiring team title, and first posted date.\n5. Return ONLY valid JSON with this exact schema (up to 15 postings per run):\n{\"jobs\": [{\"company\": \"\", \"domain\": \"\", \"job_title\": \"\", \"location\": \"\", \"remote\": \"\", \"salary\": \"\", \"posting_url\": \"\", \"ats\": \"\", \"hiring_team_title\": \"\", \"first_posted\": \"\", \"source_query\": \"@{input}\"}]}"
+      },
+      "optionalMentions": [
+        "col_ef6445ca7ee5",
+        "col_25a572f28576"
+      ]
+    },
+    {
+      "id": "col_9ab912ce23d2",
+      "header": "Send to Live Pipeline",
+      "type": "task",
+      "dataShape": "send-to-table-result",
+      "taskConfig": {
+        "taskType": "sendToTable",
+        "sendToTable": {
+          "method": "send-row-for-each-item",
+          "listSource": "value",
+          "listJsonPath": "jobs",
+          "columnMapping": [],
+          "additionalData": [],
+          "skipDuplicates": true,
+          "uniqueKeyColumnId": "col_db9f84b73e94",
+          "listSourceColumnId": "col_8c1350c543f6",
+          "updateExistingRows": false,
+          "destinationProjectId": "<TABLE_2_ID>",
+          "autoExtractNewColumns": false,
+          "destinationWorkbookId": "<WORKBOOK_ID>",
+          "autoMapExistingColumns": true,
+          "destinationProjectName": "Live Job Pipeline"
+        }
+      }
+    }
+  ]
+}

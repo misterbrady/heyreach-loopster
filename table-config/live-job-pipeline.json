@@ -1,0 +1,312 @@
+{
+  "table": "live-job-pipeline",
+  "note": "Column settings exported from a working Loopster build on 24 Nov 2026. Column ids are from that workspace. A new build gets new ids, so rebuild references with your own ids (see the API shapes section of lane-scout-loopster.md).",
+  "columns": [
+    {
+      "id": "input",
+      "header": "company",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_f94ba75ef54f",
+      "header": "domain",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_dc2029a43e11",
+      "header": "job_title",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_69c4ee4cae87",
+      "header": "location",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_e082ecbb8866",
+      "header": "remote",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_ba7dd8ca0b8a",
+      "header": "salary",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_db9f84b73e94",
+      "header": "posting_url",
+      "type": "manual",
+      "dataShape": "url"
+    },
+    {
+      "id": "col_592d92afdccc",
+      "header": "ats",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_8713d5c38c62",
+      "header": "hiring_team_title",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_a0e887b67a64",
+      "header": "first_posted",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_ecce921b2cd3",
+      "header": "source_query",
+      "type": "manual",
+      "dataShape": "text"
+    },
+    {
+      "id": "col_a49e2e5e0d36",
+      "header": "Scrape posting",
+      "type": "task",
+      "dataShape": "jina-scrape-result",
+      "taskConfig": {
+        "taskType": "jinaScraper",
+        "jinaScraper": {
+          "url": "@{col_db9f84b73e94}",
+          "format": "markdown",
+          "scrapeLinks": true,
+          "scrapeImages": false,
+          "timeoutSeconds": 15
+        }
+      }
+    },
+    {
+      "id": "col_cb0af3830959",
+      "header": "Resolve job URL",
+      "type": "ai",
+      "dataShape": "text",
+      "aiConfig": {
+        "model": "loopster-default-mini",
+        "prompt": "Extract the individual job posting URL for this role.\n\nCompany: @{input}\nJob title: @{col_dc2029a43e11}\nListing or posting URL: @{col_db9f84b73e94}\nScraped page: @{col_a49e2e5e0d36}\n\nRules:\n1. If the given URL already is an individual job page (Ashby URL with a UUID after the company, Greenhouse /jobs/{id}, Lever URL with a job slug after the company, Workable URL with a job slug), return it unchanged.\n2. Otherwise find, in the scraped page, the markdown or HTML link whose visible title matches this job title. Return that full https URL.\n3. Do not return a company listing URL (jobs.ashbyhq.com/{company} with no UUID, boards.greenhouse.io/{company} with no /jobs/{id}, jobs.lever.co/{company} with no slug).\n4. Return only the URL, or Not found."
+      }
+    },
+    {
+      "id": "col_57ce33704b7b",
+      "header": "Scrape JD",
+      "type": "task",
+      "dataShape": "jina-scrape-result",
+      "taskConfig": {
+        "taskType": "jinaScraper",
+        "jinaScraper": {
+          "url": "@{col_cb0af3830959}",
+          "format": "markdown",
+          "scrapeLinks": true,
+          "scrapeImages": false,
+          "timeoutSeconds": 15
+        }
+      }
+    },
+    {
+      "id": "col_1efe170ec3d4",
+      "header": "Qualify",
+      "type": "ai",
+      "dataShape": "json",
+      "aiConfig": {
+        "model": "loopster-default-mini",
+        "prompt": "You qualify a GTM engineer job post for a recruiting agency. Both parts must hold for a pass.\n1. Pay: the top of the base pay band is $120K USD or more. Use base pay and leave out bonus and equity, unless the post only gives OTE. Convert other currencies to USD first. No pay listed is a fail.\n2. Location: the job is in the United States, the United Kingdom or Canada. Remote counts when it is open to one of those.\n\nCompany: @{input}\nJob title: @{col_dc2029a43e11}\nLocation: @{col_69c4ee4cae87}\nSalary: @{col_ba7dd8ca0b8a}\nScraped job post: @{col_57ce33704b7b}\n\nIf the salary field is blank, read the pay band from the job post.\n\nReturn only JSON: {\"pass\": true or false, \"pay_top_usd\": number or null, \"reason\": \"one short sentence naming the part that passed or failed\"}"
+      },
+      "optionalMentions": [
+        "col_69c4ee4cae87",
+        "col_ba7dd8ca0b8a"
+      ]
+    },
+    {
+      "id": "col_ba889737b277",
+      "header": "Resolve domain",
+      "type": "ai",
+      "dataShape": "text",
+      "aiConfig": {
+        "model": "loopster-default-mini",
+        "prompt": "Company: @{input}\nDomain guessed from search: @{col_f94ba75ef54f}\nScraped job post: @{col_57ce33704b7b}\n\nReturn the hiring company's own website domain, such as acme.com, read from the job post. Use the guessed domain only when the post gives nothing better. Never return an ATS domain (ashbyhq.com, greenhouse.io, lever.co, workable.com) or an investor's domain. Return only the domain, or Not found."
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true",
+        "description": "Only for posts that pass Qualify"
+      }
+    },
+    {
+      "id": "col_c24353143e85",
+      "header": "Leaders at company",
+      "type": "task",
+      "dataShape": "ai-ark-people-list-result",
+      "taskConfig": {
+        "taskType": "aiArkFindPeopleAtCompany",
+        "aiArkFindPeopleAtCompany": {
+          "domain": "@{col_ba889737b277}",
+          "departments": [],
+          "max_results": 8,
+          "seniorities": [
+            "founder",
+            "c_suite",
+            "vp",
+            "head",
+            "director"
+          ]
+        }
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true",
+        "description": "Only for posts that pass Qualify"
+      }
+    },
+    {
+      "id": "col_d2eb61bc30db",
+      "header": "Hiring contact",
+      "type": "ai",
+      "dataShape": "text",
+      "aiConfig": {
+        "model": "loopster-default",
+        "tools": [
+          "serpSearch",
+          "retrieveUrl"
+        ],
+        "prompt": "Find the person most likely to be the hiring manager for this job, and return their LinkedIn profile URL.\n\nCompany: @{input}\nCompany domain: @{col_ba889737b277}\nJob title: @{col_dc2029a43e11}\nHiring team title on the post: @{col_8713d5c38c62}\nJob post URL: @{col_cb0af3830959}\n\nSenior people at the company, from a people database:\n@{col_c24353143e85}\n\nA GTM engineer usually reports to a founder or CEO at a small company (~50 people or fewer), or to the head of RevOps, Growth, Sales or Marketing Ops at a larger one. Use the hiring team title when it is given.\n\nPick from the senior people list first, and copy their linkedin_url exactly as the list gives it. Search the web only when nobody on the list fits, and then only return a profile you actually opened that shows this person works at @{input} today. Never build a LinkedIn URL from a name.\n\nYour entire reply must be one LinkedIn profile URL (https://www.linkedin.com/in/...) and nothing else. Return Not found only when there is no plausible person at all."
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true",
+        "description": "Only for posts that pass Qualify"
+      },
+      "optionalMentions": [
+        "col_8713d5c38c62",
+        "col_c24353143e85",
+        "col_ba889737b277"
+      ]
+    },
+    {
+      "id": "col_2aa48517d06f",
+      "header": "Still there?",
+      "type": "task",
+      "dataShape": "loopster-data-person-enrichment-result",
+      "taskConfig": {
+        "taskType": "loopsterDataEnrichPerson",
+        "loopsterDataEnrichPerson": {
+          "linkedin_url": "@{col_d2eb61bc30db}"
+        }
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true",
+        "description": "Only for posts that pass Qualify"
+      }
+    },
+    {
+      "id": "col_7a20e097ec38",
+      "header": "Profile (paid fallback)",
+      "type": "task",
+      "dataShape": "professional-profile",
+      "taskConfig": {
+        "taskType": "enrichProfessionalProfile",
+        "enrichProfessionalProfile": {
+          "profile": "@{col_d2eb61bc30db}",
+          "execution_mode": "managed"
+        }
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true && @{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8yYWE0ODUxN2QwNmYiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsiZm91bmQiXX0} != true",
+        "description": "Only when Qualify passed and the free profile check found nobody"
+      }
+    },
+    {
+      "id": "col_312916774e75",
+      "header": "Work email",
+      "type": "task",
+      "dataShape": "waterfall",
+      "taskConfig": {
+        "taskType": "waterfallEmail",
+        "waterfallEmail": {
+          "providers": [
+            {
+              "id": "loopsterDataFindWorkEmail-default",
+              "order": 0,
+              "enabled": true,
+              "taskType": "loopsterDataFindWorkEmail"
+            },
+            {
+              "id": "findymailFindByName-default",
+              "order": 1,
+              "enabled": true,
+              "taskType": "findymailFindByName",
+              "executionMode": "managed"
+            },
+            {
+              "id": "icypeasFindEmail-default",
+              "order": 2,
+              "enabled": true,
+              "taskType": "icypeasFindEmail",
+              "executionMode": "managed"
+            }
+          ],
+          "validation": {
+            "enabled": true,
+            "strategy": "balanced",
+            "onAllRejected": "use_best_rejected",
+            "validatorTaskType": "findymailVerifyEmail",
+            "maxCandidatesPerStep": 3
+          },
+          "inputMapping": {
+            "domain": "@{col_ba889737b277}",
+            "full_name": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8yYWE0ODUxN2QwNmYiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsiZnVsbF9uYW1lIl19}",
+            "last_name": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8yYWE0ODUxN2QwNmYiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsibGFzdF9uYW1lIl19}",
+            "first_name": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8yYWE0ODUxN2QwNmYiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsiZmlyc3RfbmFtZSJdfQ}",
+            "linkedin_url": "@{col_d2eb61bc30db}"
+          },
+          "waterfallType": "email"
+        }
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true && (@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8yYWE0ODUxN2QwNmYiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsiZm91bmQiXX0} == true || @{ref:v1:eyJjb2x1bW5JZCI6ImNvbF83YTIwZTA5N2VjMzgiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsic3VjY2VzcyJdfQ} == true) && @{ref:v1:eyJjb2x1bW5JZCI6ImNvbF9iMmMyZDA3OTRiYzMiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsibWF0Y2giXX0} == true",
+        "description": "Qualify passed, a profile was found, and it is someone at this company"
+      }
+    },
+    {
+      "id": "col_eb3708c4264b",
+      "header": "Give-first line",
+      "type": "ai",
+      "dataShape": "text",
+      "aiConfig": {
+        "model": "loopster-default",
+        "tools": [
+          "serpSearch",
+          "retrieveUrl"
+        ],
+        "prompt": "Read the job post for the @{col_dc2029a43e11} role at @{input} (URL: @{col_cb0af3830959}).\nScraped JD: @{col_57ce33704b7b}\n\nWrite the opening of a cold email from a recruiter who places GTM engineers, in two short sentences.\n\nSentence 1: one concrete detail only this post has. A named tool, system, number, team or outcome, in the post's own words. Never a generic phrase like 'build GTM systems' or 'own outbound'.\n\nShape sentence 1 by the first letter of the company name, so a batch of emails doesn't all open the same way:\nA to E: make the detail itself the subject of the sentence, then react to it in a few words.\nF to J: ask a short, specific question about that detail.\nK to O: say what the person in this seat will be stuck with or judged on, using the detail.\nP to T: open with the number, tool or team name, then one plain clause about it.\nU to Z, or a digit: say what usually goes wrong with that kind of work, tied to the detail.\n\nNever open with Saw, Noticed, I see, Looks like, Came across, Spotted, Love, Just, Hope, Hey or \"You're looking for\". Don't start with \"I\" or \"Your\".\n\nSentence 2: a short question offering three profiles of people who have done that specific thing. Vary how you ask. Never use the words 'exactly', 'perfect fit', 'game changer' or 'I came across'.\n\nUnder 35 words in total. Write like a person typing fast on a phone: contractions, plain words. No dashes of any kind, no semicolons, no exclamation marks, no flattery. Return only the two sentences."
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true && @{ref:v1:eyJjb2x1bW5JZCI6ImNvbF9iMmMyZDA3OTRiYzMiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsibWF0Y2giXX0} == true",
+        "description": "Qualify passed and the contact is someone at this company"
+      }
+    },
+    {
+      "id": "col_b2c2d0794bc3",
+      "header": "Right person?",
+      "type": "ai",
+      "dataShape": "json",
+      "aiConfig": {
+        "model": "loopster-default-mini",
+        "prompt": "Check that this profile is someone who works at the hiring company today.\n\nHiring company: @{input}\nCompany domain: @{col_ba889737b277}\nFree profile check: @{col_2aa48517d06f}\nPaid profile: @{col_7a20e097ec38}\n\nUse whichever profile has data. Match when the profile's current company name or website is this company (allow small spelling differences, such as Inc or a .ai domain). A different company, a past job only, or no current company is not a match.\n\nReturn only JSON: {\"match\": true or false, \"current_company\": \"the company the profile shows today\", \"reason\": \"one short sentence\"}"
+      },
+      "runCondition": {
+        "condition": "@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8xZWZlMTcwZWMzZDQiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsicGFzcyJdfQ} == true && (@{ref:v1:eyJjb2x1bW5JZCI6ImNvbF8yYWE0ODUxN2QwNmYiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsiZm91bmQiXX0} == true || @{ref:v1:eyJjb2x1bW5JZCI6ImNvbF83YTIwZTA5N2VjMzgiLCJzb3VyY2UiOiJ2YWx1ZSIsInBhdGgiOlsic3VjY2VzcyJdfQ} == true)",
+        "description": "Qualify passed and a profile was found"
+      },
+      "optionalMentions": [
+        "col_2aa48517d06f",
+        "col_7a20e097ec38",
+        "col_ba889737b277"
+      ]
+    }
+  ]
+}
