@@ -73,7 +73,21 @@ Never open with Just, Hope, Following up, Circling back or Bumping. Return only 
 - **The webhook address only shows once.** `GET /tables/{t}/webhook` returns the last four characters. `POST /tables/{t}/webhook/rotate` returns the full address. Rotate before you give it to HeyReach.
 - **Mark replied** is `send-to-table` with method `send-row`, `updateExistingRows: true`, the unique key set to Outreach log's `linkedin_url`, and `additionalData: [{"fieldName": "replied", "value": "true"}]`. That's free, and it's the line that stops the timer.
 
-**Schedule:** one `interval` schedule on Link views, every 1 hour, `cells: "all"`, so the count refreshes. The formula columns recompute by themselves. Draft follow-up, Rules check and the two Slack columns run on autoplay once their condition becomes true, so turn **autoplay on for this table only after the one-row test**.
+**Schedules and autoplay** (the setup that ran in the test build). All are `interval`, every 1 hour, staggered so each step reads the one before it:
+
+| Table | Columns | `cells` | First run |
+|---|---|---|---|
+| Outreach log | Follow-up due?, Opened? (plus Link views if you have one) | `all` | :30 |
+| Outreach log | Draft follow-up, Rules check | `empty` | :35 |
+| Outreach log | Draft follow-up, Rules check | `unsatisfied` | :36 |
+| Outreach log | Call now, Send draft to me | `empty` | :45 |
+| Outreach log | Call now, Send draft to me | `unsatisfied` | :46 |
+| Replies | Alert me | `empty` | :45 |
+| Replies | Alert me | `unsatisfied` | :46 |
+
+Each step needs two schedules because a row whose condition was false last hour is stored as `unsatisfied`, not `empty`. One schedule catches new rows and the other catches rows whose condition has just come true. Neither reruns a cell that already has a value, so nobody gets drafted or alerted twice.
+
+Turn **autoplay on for both tables after the one-row test.** Then a new Outreach log row that's already due gets its draft at once, and a reply arriving by webhook is marked, drafted and checked within seconds. Only the Slack messages wait for the next :45.
 
 ### Table 2: Replies
 
