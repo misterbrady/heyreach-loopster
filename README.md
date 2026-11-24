@@ -2,7 +2,7 @@
 
 The build files from my talk at the HeyReach, Loopster, Smartlead and ZapMail event in Lisbon on 24 Nov 2026.
 
-I'm Steven Brady. I run [lfgtme.com](https://lfgtme.com), a recruiting agency for GTM engineers, and I co-founded [Kith](https://www.kith.contact). Everything here is what I actually run, at small numbers, two weeks in.
+I'm Steven Brady. I run [lfgt.me](https://lfgt.me), a recruiting agency for GTM engineers, and I co-founded [Kith](https://www.kith.contact). Everything here is what I actually run, at small numbers, two weeks in.
 
 ## What's here
 
@@ -39,4 +39,4 @@ A build guide for the whole loop as one Loopster flow: find the job post, pick t
 
 ## Contact
 
-[lfgtme.com](https://lfgtme.com) · [kith.contact](https://www.kith.contact)
+[lfgt.me](https://lfgt.me) · [kith.contact](https://www.kith.contact)
