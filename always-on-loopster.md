@@ -1,6 +1,6 @@
 # The always-on agent, as Loopster tables
 
-My version runs on my laptop every 15 minutes (slide 43 in the talk). This is the same agent rebuilt in Loopster, so it runs without a laptop. **Built and tested on 24 Nov 2026, apart from the Slack and link-view columns.** A reply sent to the webhook landed as a row, marked the person as replied in the Outreach log and stopped their 36 hour timer, all for $0. Build it with autoplay off and test each table on one row.
+My version runs on my laptop every 15 minutes (slide 43 in the talk). This is the same agent rebuilt in Loopster, so it runs without a laptop. **Built and tested on 24 Nov 2026, apart from the link-view column.** The drafts, the rules checks and both Slack alerts ran for real, for $0.004 in total. A reply sent to the webhook landed as a row, marked the person as replied in the Outreach log and stopped their 36 hour timer, all for $0. Build it with autoplay off and test each table on one row.
 
 What it does, same as the laptop version:
 
@@ -17,7 +17,7 @@ The two differences: Loopster's shortest schedule is once an hour, so checks are
 ## Before you build
 
 - Connect **HeyReach** and **Slack** in Loopster (Settings, Connections). Both columns run on your own account and cost nothing from the wallet. `GET /v1/connections` should list both.
-- Make one private Slack channel for the agent, like `#outbound-agent`, and get its channel id.
+- Make one Slack channel for the agent, like `#outbound-agent`. The Slack column takes the name with its `#` as `channel_id`, so you don't need to look up the id.
 - Your pipeline (the job-post build in `lane-scout-loopster.md`, or any other) is where people come from. This agent starts once you've messaged them.
 
 ---

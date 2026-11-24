@@ -10,7 +10,7 @@ I'm Steven Brady. I run [lfgt.me](https://lfgt.me), a recruiting agency for GTM 
 |---|---|
 | [`lane-scout-loopster.md`](lane-scout-loopster.md) | The full spec for a two-table Loopster workbook. It finds fresh job posts, qualifies them, finds the hiring manager, checks they still work there, gets a work email and writes a give-first opening line from the actual job post. |
 | [`build-for-any-company.md`](build-for-any-company.md) | Turns the spec above into a build for any company from one website. Holds the one-line prompt, the five-line brief the agent writes first, and which Loopster signal to use when job posts aren't the right moment. |
-| [`always-on-loopster.md`](always-on-loopster.md) | The agent that watches replies, link opens and 36 hour follow-up timers, rebuilt as Loopster tables. It drafts and alerts you in Slack, and never sends. Built and tested on 24 Nov apart from Slack and link views. |
+| [`always-on-loopster.md`](always-on-loopster.md) | The agent that watches replies, link opens and 36 hour follow-up timers, rebuilt as Loopster tables. It drafts and alerts you in Slack, and never sends. Built and tested on 24 Nov, apart from link views. |
 | [`table-config/`](table-config/) | The column settings (prompts, gating, providers) exported from a working build of that spec. Use them as a reference when a column won't behave. |
 
 ## Build it in 5 minutes
