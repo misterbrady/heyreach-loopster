@@ -9,6 +9,8 @@ I'm Steven Brady. I run [lfgt.me](https://lfgt.me), a recruiting agency for GTM 
 | File | What it is |
 |---|---|
 | [`lane-scout-loopster.md`](lane-scout-loopster.md) | The full spec for a two-table Loopster workbook. It finds fresh job posts, qualifies them, finds the hiring manager, checks they still work there, gets a work email and writes a give-first opening line from the actual job post. |
+| [`build-for-any-company.md`](build-for-any-company.md) | Turns the spec above into a build for any company from one website. Holds the one-line prompt, the five-line brief the agent writes first, and which Loopster signal to use when job posts aren't the right moment. |
+| [`always-on-loopster.md`](always-on-loopster.md) | The agent that watches replies, link opens and 36 hour follow-up timers, rebuilt as Loopster tables. It drafts and alerts you in Slack, and never sends. A spec, not yet built end to end. |
 | [`table-config/`](table-config/) | The column settings (prompts, gating, providers) exported from a working build of that spec. Use them as a reference when a column won't behave. |
 
 ## Build it in 5 minutes
@@ -32,6 +34,14 @@ Each of these cost me money or a wrong contact before I wrote it down. They're a
 - The AI will invent a hiring manager if you let it search alone. Give it a list of real senior people first, then check the person it picks works at the company today.
 - A blank salary field fails a job that lists pay in the post. Let the qualifier read the post.
 - Ask an AI to "vary the opening" and half your emails still start with "Saw you're". Tie the opening style to something in the data, like the company name.
+
+## Build it for your company
+
+Hand your agent both spec files and say:
+
+> Read build-for-any-company.md and lane-scout-loopster.md. My company is **yourcompany.com**. Build my outbound engine in Loopster. Spend nothing until I've looked at it.
+
+It reads your site, writes a five-line brief for you to check, picks a signal and builds the tables. It prices every run with a dry run first and spends nothing until you say yes.
 
 ## Coming next
 
