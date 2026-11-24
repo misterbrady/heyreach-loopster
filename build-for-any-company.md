@@ -17,7 +17,8 @@ Everything below is for the agent.
 1. **Spend nothing without a yes.** Read `GET /v1/wallet` first. Build tables and columns (free), use `POST /v1/search` (free), use signal previews (free, 20 a day) and `?dryRun=true` on every trigger (free). Anything that bills, ask first: a real trigger, creating a signal monitor (its first check bills straight away), or a schedule. When you ask, give the dry-run price.
 2. **Autoplay off** on every table until the human has seen a row.
 3. **Never send anything.** No HeyReach, Smartlead or Slack column runs on its own. The output is a table of drafts a person reads.
-4. Read `lane-scout-loopster.md` all the way through, especially **API shapes** and **Traps**. That file is a worked example for one company (a recruiter placing GTM engineers). This file tells you how to swap it for any company.
+4. Every path in both files is relative to `https://app.loopster.ai/api/v1`. Where a path is written `/v1/x`, call `https://app.loopster.ai/api/v1/x`. Never send `/v1/v1`.
+5. Read `lane-scout-loopster.md` all the way through, especially **API shapes** and **Traps**. That file is a worked example for one company (a recruiter placing GTM engineers). This file tells you how to swap it for any company.
 
 ## Step 1. Read the website and write the brief (2 minutes, free)
 
@@ -33,7 +34,7 @@ Open the homepage, the services or product page and the about page. Write five l
 
 Take the buyer, the proof and the give from the site's own claims, case studies and offer. If the site offers "one fix you can start this week", that's the give. Don't invent services they don't sell.
 
-If the human says the brief is wrong, fix it. Don't build until they've seen it.
+Show the brief, then keep building unless the human stops you. Building is free, so a wrong brief costs a rebuild and no money. Fix it as soon as they say.
 
 ## Step 2. Pick the signal
 
@@ -70,13 +71,25 @@ Build `lane-scout-loopster.md` exactly, and change only these:
 | Give-first prompt, "from a recruiter who places GTM engineers" | the **Seller** line |
 | Give-first prompt, sentence 2 | an offer of the **Give** |
 
+Also rewrite every other line that names GTM engineers:
+
+- Discover's opening line and the "Lane Scout" persona.
+- Two of the seven seed queries are GTM-only. Swap "The Shortlist / gtmengineersearch.com" for a job board your buyer's market uses (Welcome to the Jungle for UK and EU tech, for example), and reword the Hacker News query for the new title.
+- The reporting-line paragraph in Hiring contact. Rewrite it whole, with the **Buyer** titles.
+- "Never a generic phrase like 'build GTM systems'" in Give-first. Use a generic phrase from the new role.
+- Greenhouse boards live on both `boards.greenhouse.io` and `job-boards.greenhouse.io`. Put both in the seed query and in Resolve job URL.
+
+Qualify only has to return `pass` and `reason`. Drop `pay_top_usd` and the salary line when pay isn't part of the **Proof gate**.
+
+**Common roles need a volume cap.** GTM engineer posts are rare, so the worked build sees a handful a day. SDR, AE or marketing posts are everywhere. Put a size band in the Proof gate (for example 20 to 500 employees), tell Discover to return at most 5 postings a query, and estimate a day as `queries x $0.05 + passing posts x $0.13` before you suggest a schedule.
+
 Keep the Right person? check, the letter rule for openers and every gate. They exist because each one failed once.
 
 Name the workbook after the company and the signal, like `Acme: SDR hiring`.
 
 ### If the signal is a monitor
 
-1. **Accounts table.** `POST /v1/search` is free and returns up to 50 companies a page. `GET /v1/search/filters` lists the filter ids (country, employee count, industry and more). Search for the **Buyer** company type and load 25 to 50 rows: `company`, `domain`, `linkedin_url`. Don't add more until the human likes the first 25.
+1. **Accounts table.** `POST /v1/search` is free and returns up to 50 companies a page. `GET /v1/search/filters?entity=companies` lists (without `entity` it's a 400) the filter ids (country, employee count, industry and more). Search for the **Buyer** company type and load 25 to 50 rows: `company`, `domain`, `linkedin_url`. Don't add more until the human likes the first 25.
 2. **Preview the signal, for free.** `POST /v1/signal-types/{slug}/preview` with `{"source": {"tableId": ..., "identifierKind": "domain", "identifierColumnId": "<domain col id>"}, "eventTypes": [...]}`. It samples up to 10 companies and shows the rows a monitor would add, plus the monthly cost. Show the human.
 3. **Signals table.** Create a table called `Signals` and copy the preview's `columns` as manual columns. Load the preview's sample rows into it, so the pipeline columns have something to run on before you spend anything.
 4. **Pipeline columns on Signals,** in this order. The shapes are in `lane-scout-loopster.md`:
@@ -90,7 +103,7 @@ Name the workbook after the company and the signal, like `Acme: SDR hiring`.
 
 ## Step 4. Show it (still free)
 
-1. Dry-run the whole pipeline on 2 or 3 rows: `POST /tables/{t}/trigger?dryRun=true` with `rowIds`, `columnIds` and `maxCostUsd`. Report `expectedCostUsd`.
+1. **Price it before any real rows exist.** On the job-post build the pipeline table is empty until Discover runs, and Discover bills. So insert 3 placeholder rows by hand (a real-looking company, domain, job title and posting URL), dry-run them, then delete them. Dry-run the whole pipeline on those rows: `POST /tables/{t}/trigger?dryRun=true` with `rowIds`, `columnIds` and `maxCostUsd`. Report `expectedCostUsd`.
 2. Mint a read-only share link for each table (`POST /tables/{t}/shares` with `expiresInSeconds: 86400`) so the human can click it.
 3. Report in this shape, and nothing else:
    - the five-line brief
@@ -100,6 +113,12 @@ Name the workbook after the company and the signal, like `Acme: SDR hiring`.
    - the one thing you weren't sure about
 
 Then wait for a yes before any real run.
+
+**Don't be alarmed by `appliedFixes`.** Creating Work email can come back with "Started 2 steps on Loopster's account, billed to the wallet". That's a setting: it picked Loopster's managed accounts as the default. Nothing is charged until a cell runs. Check `GET /v1/wallet` if you want to be sure.
+
+**Output keys the gates read,** confirmed in a live run on 24 Nov: Still there? gives `found`, `first_name`, `last_name`, `full_name`, `current_company`. Profile (paid fallback) gives `success`. Qualify and Right person? give whatever JSON keys their prompt asks for (`pass`, `match`). A wrong path in a ref is accepted silently and the gate never fires, so copy these exactly.
+
+Signal previews only apply to the monitor path.
 
 ## The traps that catch new builds
 

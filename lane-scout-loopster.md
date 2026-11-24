@@ -39,7 +39,7 @@ App URLs are team-scoped (`/app/{team-slug}/tables/{id}`). Bare `/tables/{id}` 4
 
 **API habits that matter:**
 
-- Create columns **one at a time**. `POST /v1/tables/{id}/columns` with a `templateId` from `GET /v1/tables/{id}/columns/templates`.
+- Create **enrichment** columns one at a time (manual columns can go in one call). `POST /v1/tables/{id}/columns` with a `templateId` from `GET /v1/tables/{id}/columns/templates`.
 - `PATCH` on a column **merges** `aiConfig` / `taskConfig`. Arrays replace wholesale.
 - `POST /v1/tables/{id}/trigger` with **no `rowIds` runs every row**. Always send `rowIds`. Always send `maxCostUsd`. Price first with `?dryRun=true`.
 - Set **autoplay: false** on both tables until the test pass is done.
@@ -68,7 +68,7 @@ Why two tables: Loopgent (`loopster-default` + `serpSearch` + `retrieveUrl`) is 
 
 ## Create the workbook
 
-1. `POST /v1/workbooks` name: `Lane Scout (In-Sheet Agent)`.
+1. `POST /workbooks` name: `Lane Scout (In-Sheet Agent)`.
 2. Create **Table 2 first** (the destination has to exist before send-to-table can point at it).
 3. Create Table 1 in the same workbook.
 4. Both tables: `autoplay: false`. Table 2: `keepExistingResults: true`. Table 2 auto-dedupe on `posting_url`, keep oldest.
@@ -117,7 +117,7 @@ Scraped page: @{scrape_posting}
 Rules:
 1. If the given URL already is an individual job page (Ashby URL with a UUID after the company, Greenhouse /jobs/{id}, Lever URL with a job slug after the company, Workable URL with a job slug), return it unchanged.
 2. Otherwise find, in the scraped page, the markdown or HTML link whose visible title matches this job title. Return that full https URL.
-3. Do not return a company listing URL (jobs.ashbyhq.com/{company} with no UUID, boards.greenhouse.io/{company} with no /jobs/{id}, jobs.lever.co/{company} with no slug).
+3. Do not return a company listing URL (jobs.ashbyhq.com/{company} with no UUID, boards.greenhouse.io/{company} or job-boards.greenhouse.io/{company} with no /jobs/{id}, jobs.lever.co/{company} with no slug).
 4. Return only the URL, or Not found.
 ```
 
@@ -327,7 +327,7 @@ Load these 7 rows. Swap `"GTM Engineer"` / `"GTM Engineering"` / `"Go-to-Market 
 | Source name | Search query | ATS or source | Notes |
 |---|---|---|---|
 | Ashby - GTM Engineer | `site:jobs.ashbyhq.com ("GTM Engineer" OR "GTM Engineering")` | Ashby | US/UK/Canada roles preferred; extract exact base pay band if shown on Ashby page. |
-| Greenhouse - GTM Engineer | `site:boards.greenhouse.io ("GTM Engineer" OR "GTM Engineering")` | Greenhouse | Check Greenhouse posting body for compensation range and hiring team title. |
+| Greenhouse - GTM Engineer | `(site:boards.greenhouse.io OR site:job-boards.greenhouse.io) ("GTM Engineer" OR "GTM Engineering")` | Greenhouse | Check Greenhouse posting body for compensation range and hiring team title. |
 | Lever - GTM Engineer | `site:jobs.lever.co ("GTM Engineer" OR "GTM Engineering")` | Lever | Capture exact Lever URL and location/remote details. |
 | Workable - GTM Engineer | `site:apply.workable.com ("GTM Engineer" OR "GTM Engineering")` | Workable | Drop pure SDR, RevOps analyst, or solutions engineer roles. |
 | ATS - Go-to-Market Engineer | `(site:jobs.ashbyhq.com OR site:boards.greenhouse.io OR site:jobs.lever.co) "Go-to-Market Engineer"` | Ashby/Greenhouse/Lever | Catches hyphenated Go-to-Market Engineer titles missed by GTM Engineer queries. |
@@ -379,7 +379,7 @@ A schedule spends from the wallet with nobody watching. A key with spending turn
 
 ## Swap for your niche
 
-Change four things. Leave the rest.
+Change these. Leave the rest. `build-for-any-company.md` lists every GTM-specific line to rewrite.
 
 | Knob | This build | Your build |
 |---|---|---|
@@ -427,7 +427,7 @@ Daily ballpark if you run all 7 seed queries and a handful of new posts qualify:
 
 Everything above says *what* to build. This section says *how the API wants it*, so a fresh session builds it first time without opening another table to copy from.
 
-**Auth and base.** `https://app.loopster.ai/api/v1`, header `Authorization: Bearer <key>`. Read the key from the `LOOPSTER_API_KEY` environment variable and never print it. App links are `https://app.loopster.ai/app/<team>/tables/<tableId>`.
+**Auth and base.** `https://app.loopster.ai/api/v1`. Every path in this file is relative to that, so `/workbooks` and `/v1/workbooks` both mean `https://app.loopster.ai/api/v1/workbooks`. Send header `Authorization: Bearer <key>`. Read the key from the `LOOPSTER_API_KEY` environment variable and never print it. App links are `https://app.loopster.ai/app/<team>/tables/<tableId>`.
 
 **Build order.**
 1. `POST /workbooks` with `{"name": ...}`, then `POST /tables` with `{"title": ..., "autoplay": false}` for each table, then move each into the workbook with `POST /workbooks/{workbookId}/tables` `{"tableId": ...}`.
